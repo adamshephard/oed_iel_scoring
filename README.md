@@ -32,3 +32,63 @@ Below are the main executable scripts in the repository:
 - `epithelium_segmentation.py`: hovernetplus inference script
 - `iel_scoring.py`: IEL scoring script
 - `viz_iels.py`: Visualise IEL/nuclei and dysplasi regions in cases.
+
+
+## Inference
+
+### Data Format
+Input: <br />
+- WSIs supported by [OpenSlide](https://openslide.org/), including `svs`, `tif`, `ndpi` and `mrxs`.
+
+Output: <br />
+- HoVer-Net nuclei and epithelium segmentations as `dat` and `png` files, respectively. These segmentations are saved at 0.5 mpp resolution. Nuclei `dat` files have a key as the ID for each nucleus, which then contain a dictionary with the keys:
+  - 'box': bounding box coordinates for each nucleus
+  - 'centroid': centroid coordinates for each nucleus
+  - 'contour': contour coordinates for each nucleus 
+  - 'prob': per class probabilities for each nucleus
+  - 'type': prediction of category for each nucleus
+- Transformer dysplasia segmentations as `png` files. These segmentations are saved at 1 mpp resolution.
+- IEL scores.
+
+### Model Weights
+
+We use the following weights in this work. If any of the models or checkpoints are used, please ensure to cite the corresponding paper.
+
+- The Transformer model weights (for dyplasia segmentation) obtained from training on the Sheffield OED dataset: [OED Transformer checkpoint](https://drive.google.com/file/d/1EF3ItKmYhtdOy5aV9CJZ0a-g03LDaVy4/view?usp=sharing). 
+- The HoVer-Net+ model weights (for epithelium segmentation) obtained from training on the Sheffield OED dataset: [OED HoVer-Net+ checkpoint](https://drive.google.com/file/d/1D2OQhHv-5e9ncRfjv2QM8HE7PAWoS79h/view?usp=sharing). Note, these weights are updated compared to TIAToolbox's and are those obtained in this [paper](https://arxiv.org/abs/2307.03757).
+
+### Usage
+
+#### Dysplasia Segmentation with Transformer
+
+The first stage is to run the Transformer-based model on the WSIs to generate dysplasia segmentations. This is relatively fast and is run at 1.0mpp. Note, the `model_checkpoint` is the path to the Transformer segmentation weights available to download from above.
+
+Usage: <br />
+```
+  python dysplasia_segmentation.py --input_dir="/path/to/input/slides/or/images/dir/" --output_dir="/path/to/transformer/output/dir/" --model_checkpoint="/path/to/transformer/checkpoint/"
+```
+#### Epithelium Segmentation with HoVer-Net+
+
+The second stage is to run HoVer-Net+ on the WSIs to generate epithelial and nuclei segmentations. This can be quite slow as run at 0.5mpp. Note, the `model_checkpoint` is the path to the HoVer-Net+ segmentation weights available to download from above. However, if none are provided then the default version of HoVer-Net+ used with TIAToolbox, will be used.
+
+Usage: <br />
+```
+  python epithelium_segmentation.py --input_dir="/path/to/input/slides/or/images/dir/" --output_dir="/path/to/epithelium/output/dir/" --model_checkpoint="/path/to/hovernetplus/checkpoint/"
+```
+
+#### IEL Scoring
+
+The second stage is to generate IEL scores for each WSI using the nuclei/layer segmentations. Note the `epithelium_dir` is the output directory from the previous step.
+
+Usage: <br />
+```
+  python iel_scoring.py --input_dir="/path/to/input/slides/or/images/dir/" --epithelium_dir="/path/to/hovernetplus/output/" --output_dir="/path/to/output/feature/dir/"
+```
+
+## License
+
+TO DO
+
+## Cite this repository
+
+TO DO
