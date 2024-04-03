@@ -1,8 +1,8 @@
 # Intra-Epithelial Lymphocyte (IEL) Scoring for Predicting Oral Epithelial Dysplasia Malignant Transformation
 
-This repository provides the code for the models used for predicting slide-level malignancy transformation in OED, based on H&E-stained whole-slide images. Link to preprint [here](n/a).
+This repository provides the code for the models used for predicting slide-level malignancy transformation in OED, based on H&E-stained whole-slide images. Link to preprint [here](https://www.medrxiv.org/content/10.1101/2024.03.27.24304967v1).
 
-The first step in this pipeline is to use HoVer-Net+ (see original paper [here](https://openaccess.thecvf.com/content/ICCV2021W/CDPath/html/Shephard_Simultaneous_Nuclear_Instance_and_Layer_Segmentation_in_Oral_Epithelial_Dysplasia_ICCVW_2021_paper.html)) to segment the epithelium and nuclei. We have used the TIAtoolbox (see paper [here](https://www.nature.com/articles/s43856-022-00186-5)) implementation of HoVer-Net+ in the below scripts. Next, we have used a Transformer-based model to segment the dyplastic regions of the WSIs (see paper here).
+The first step in this pipeline is to use HoVer-Net+ (see original paper [here](https://openaccess.thecvf.com/content/ICCV2021W/CDPath/html/Shephard_Simultaneous_Nuclear_Instance_and_Layer_Segmentation_in_Oral_Epithelial_Dysplasia_ICCVW_2021_paper.html)) to segment the epithelium and nuclei. We have used the TIAToolbox (see paper [here](https://www.nature.com/articles/s43856-022-00186-5)) implementation of HoVer-Net+ in the below scripts. Next, we have used a Transformer-based model to segment the dyplastic regions of the WSIs (see paper here).
 
 ## Set Up Environment
 
@@ -99,5 +99,14 @@ Usage: <br />
 TO DO
 
 ## Cite this repository
-
-TO DO
+```
+@article{Shephard2024IELs,
+	author = {Adam J Shephard and Hanya Mahmood and Shan E Ahmed Raza and Syed Ali Khurram and Nasir M Rajpoot},
+	title = {A Novel AI-based Score for Assessing the Prognostic Value of Intra-Epithelial Lymphocytes in Oral Epithelial Dysplasia},
+	year = {2024},
+	doi = {10.1101/2024.03.27.24304967},
+	publisher = {Cold Spring Harbor Laboratory Press},
+	URL = {https://www.medrxiv.org/content/early/2024/03/28/2024.03.27.24304967},
+	journal = {medRxiv}
+}
+```
