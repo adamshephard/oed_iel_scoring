@@ -41,6 +41,7 @@ from scipy import ndimage
 import cv2
 from skimage import morphology
 from shapely.geometry import shape, Point, Polygon, box
+from shapely.strtree import STRtree
 
 from matplotlib import pyplot as plt
 
@@ -61,7 +62,7 @@ def iel_scoring(
     color_dict: dict,
     patch_size: int | int = 128,
     patch_stride: int | int = 64,
-    viz_mpp: float | float = 1.0
+    viz_mpp: float | float = 2.0
     ) -> None:
     """
     Generate IEL scores using masks and nuclei segmentations.
@@ -95,6 +96,7 @@ def iel_scoring(
     base_dims = wsi.slide_dimensions(resolution=0, units="level")
     base_mpp = wsi.info.mpp
     thumb = wsi.slide_thumbnail(resolution=viz_mpp, units="mpp")
+    thumb_dims = np.asarray(thumb.shape[:2][::-1])
     
     # Read mask
     mask = imread(mask_path)
@@ -110,29 +112,70 @@ def iel_scoring(
     nuc_data = joblib.load(nuc_path)
     nuc_mpp = 0.5 # hardcoded!
     nuc_dims = wsi.slide_dimensions(resolution=nuc_mpp, units="mpp")
-    
+    thumb_ds = nuc_dims / thumb_dims
+
     # Transform mask dictionary into shapely polygons. Process at nuc dims
-    mask_polygons = get_mask_polygons(wsi, mask, nuc_mpp, "mpp")
-    
+    # mask_polygons = get_mask_polygons(wsi, mask, nuc_mpp, "mpp")
+    mask_polygons = get_mask_polygons(wsi, mask, viz_mpp, "mpp")
+
     # Transform nuclear dictionary into shapely geometries with lits of contours and types
-    nuc_geometries, inst_cntrs, inst_types = get_nuclear_polygons(wsi, {"mpp": nuc_mpp, "nuc": nuc_data}, nuc_mpp, "mpp")
-    
+    # nuc_geometries, inst_cntrs, inst_types = get_nuclear_polygons(wsi, {"mpp": nuc_mpp, "nuc": nuc_data}, nuc_mpp, "mpp")
+    nuc_geometries, inst_cntrs, inst_types = get_nuclear_polygons(wsi, {"mpp": nuc_mpp, "nuc": nuc_data}, viz_mpp, "mpp")
+
+
+
+# does not work for some reason!!
+
+    spatial_indexer = STRtree(nuc_geometries)
+    geo_indices = [
+        idx
+        for poly in mask_polygons
+        for idx in spatial_indexer.query(poly)
+        if poly.intersects(nuc_geometries[idx])
+        ]
+    geo_indices2 = [
+        idx
+        for poly in mask_polygons
+        for idx in spatial_indexer.query(poly)
+        if nuc_geometries[idx].within(poly)
+        ]
     # Now, iterate through nuclear geometries and check if they lie within any of the outer polygons but not in holes
     nuc_overlay = thumb.copy()
     nr_iels = 0
     nr_epith = 0
-    for obj in tqdm(nuc_geometries, desc="Processing Nuclei"): 
-        for polygon in mask_polygons:
-            if obj.within(polygon):
-                inst_c = inst_cntrs[nuc_geometries.index(obj)]
-                inst_t = inst_types[nuc_geometries.index(obj)]
-                if inst_t == 1: # hardcoded that iels are 1, and epith are else
-                    nuc_overlay = cv2.circle(nuc_overlay, (int(obj.centroid.x), int(obj.centroid.y)), 4, (255, 0, 0), -1) # 3
-                    nr_iels += 1
-                else:
-                    nuc_overlay = cv2.circle(nuc_overlay, (int(obj.centroid.x), int(obj.centroid.y)), 2, (0, 255, 0), -1) # 3
-                    nr_epith += 1
-                break  # No need to check further polygons if the object is already within one
+    for g_i in tqdm(geo_indices2, desc="Processing Nuclei"): 
+        # inst_c = inst_cntrs[nuc_geometries.index(obj)]
+        geo = nuc_geometries[g_i]
+        inst_t = inst_types[g_i]
+        # centroid_x = int(geo.centroid.x / thumb_ds[0])
+        # centroid_y = int(geo.centroid.y / thumb_ds[1])
+        centroid_x = int(geo.centroid.x)
+        centroid_y = int(geo.centroid.y)
+        if inst_t == 1: # hardcoded that iels are 1, and epith are else
+            nuc_overlay = cv2.circle(nuc_overlay, (centroid_x, centroid_y), 4, (255, 0, 0), -1) # 3
+            nr_iels += 1
+        else:
+            nuc_overlay = cv2.circle(nuc_overlay, (centroid_x, centroid_y), 2, (0, 255, 0), -1) # 3
+            nr_epith += 1
+    
+    # # Now, iterate through nuclear geometries and check if they lie within any of the outer polygons but not in holes
+    # nuc_overlay = thumb.copy()
+    # nr_iels = 0
+    # nr_epith = 0
+    # for obj in tqdm(nuc_geometries, desc="Processing Nuclei"): 
+    #     for polygon in mask_polygons:
+    #         if obj.within(polygon):
+    #             # inst_c = inst_cntrs[nuc_geometries.index(obj)]
+    #             inst_t = inst_types[nuc_geometries.index(obj)]
+    #             centroid_x = int(obj.centroid.x / thumb_ds[0])
+    #             centroid_y = int(obj.centroid.y / thumb_ds[1])
+    #             if inst_t == 1: # hardcoded that iels are 1, and epith are else
+    #                 nuc_overlay = cv2.circle(nuc_overlay, (centroid_x, centroid_y), 4, (255, 0, 0), -1) # 3
+    #                 nr_iels += 1
+    #             else:
+    #                 nuc_overlay = cv2.circle(nuc_overlay, (centroid_x, centroid_y), 2, (0, 255, 0), -1) # 3
+    #                 nr_epith += 1
+    #             break  # No need to check further polygons if the object is already within one
     
     # IEL scoring
     iel_index = nr_iels / area_microns # microns
@@ -189,11 +232,11 @@ def iel_scoring_wrapper(
     Raises:
         ValueError: If mode is not "tile" or "wsi".
     """
-    wsi_file_list = glob.glob(input_wsi_dir + "*.*")
+    wsi_file_list = glob.glob(input_wsi_dir + "*.*")[1:]
     for wsi_file in wsi_file_list:
         iel_scoring(
             wsi_file, input_mask_dir, input_nuc_dir, output_dir, mode,
-            patch_size, patch_stride, color_dict
+            color_dict, patch_size, patch_stride
         )
     
     # pool = multiprocessing.Pool(processes=nr_workers)

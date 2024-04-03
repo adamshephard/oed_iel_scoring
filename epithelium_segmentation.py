@@ -1,5 +1,6 @@
 """
 Use TIAToolbox Multi-Task Segmentor to get nuclear/epithelial layer segmentations with HoVer-Net+.
+Returns nuclear and epithelial segmentations at 0.50mpp.
 
 Usage:
   epithelium_segmentation.py [options] [--help] [<args>...]
@@ -123,6 +124,8 @@ def process_segmentation(seg_path: str, out_path: str, colour_dict: dict, mode: 
     Post-processing for WSI-level segmentations.
     """
     seg = np.load(seg_path)
+    # seg = cv2.resize(seg, (seg.shape[1]//4, seg.shape[0]//4))
+    # seg = smooth_ep_ker_boundary(seg, 2)    
     seg = smooth_ep_ker_boundary(seg, 0.5) # or is it 2    
     seg = remove_spurious_epith(seg)
     seg_col = np.expand_dims(seg, axis=2)
@@ -172,15 +175,15 @@ def segment_epithelium(
     wsi_output = multi_segmentor.predict(
         imgs=wsi_file_list,
         masks=None,
-        save_dir=os.path.join(output_dir, "epith/tmp"),
+        save_dir=os.path.join(output_dir, "tmp"),
         mode=mode, #"wsi",
         on_gpu=True,
         crash_on_exception=True,
     )
 
     # Rename TIAToolbox output files to readability
-    layer_dir = os.path.join(output_dir, "epith", "layers")
-    nuclei_dir = os.path.join(output_dir, "epith", "nuclei")
+    layer_dir = os.path.join(output_dir, "epith")
+    nuclei_dir = os.path.join(output_dir, "nuclei")
     os.makedirs(layer_dir, exist_ok=True)
     os.makedirs(nuclei_dir, exist_ok=True)
 
@@ -188,17 +191,17 @@ def segment_epithelium(
         basename = os.path.basename(out[0]).split(".")[0]
         outname = os.path.basename(out[1]).split(".")[0]
         process_segmentation(
-            seg_path=os.path.join(output_dir, "epith/tmp", f"{outname}.1.npy"),
+            seg_path=os.path.join(output_dir, "tmp", f"{outname}.1.npy"),
             out_path=os.path.join(layer_dir, basename + ".png"),
             colour_dict=colour_dict,
             mode=mode,
         )
         # process nuclei too!
         shutil.move(
-            os.path.join(output_dir, "epith/tmp", f"{outname}.0.dat"),
+            os.path.join(output_dir, "tmp", f"{outname}.0.dat"),
             os.path.join(nuclei_dir, basename + ".dat"),
             )
-    shutil.rmtree(os.path.join(output_dir, "epith/tmp"))
+    shutil.rmtree(os.path.join(output_dir, "tmp"))
 
     return
     
@@ -219,7 +222,7 @@ if __name__ == '__main__':
     if args['--output_dir']:
         output_dir = args['--output_dir']
     else:
-        output_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/output4/"
+        output_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/output_epith2/"
     
     if args['--mode']:
         mode = args['--mode']
