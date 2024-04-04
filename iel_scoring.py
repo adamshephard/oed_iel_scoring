@@ -40,7 +40,7 @@ import pandas as pd
 from scipy import ndimage
 import cv2
 from skimage import morphology
-from shapely.geometry import shape, Point, Polygon, box
+from shapely.geometry import shape, Point, Polygon, box, MultiPolygon
 from shapely.strtree import STRtree
 
 from matplotlib import pyplot as plt
@@ -117,33 +117,39 @@ def iel_scoring(
     # Transform mask dictionary into shapely polygons. Process at nuc dims
     # mask_polygons = get_mask_polygons(wsi, mask, nuc_mpp, "mpp")
     mask_polygons = get_mask_polygons(wsi, mask, viz_mpp, "mpp")
-
+    
+    ## Viz mask to ensure correct
+    # overlay3 = np.zeros_like(thumb)
+    # for geom in mask_polygons.geoms:
+    #     contour_points = np.asarray(geom.exterior.coords, dtype='int').tolist()
+    #     contour_points = np.array(contour_points).reshape((-1, 1, 2))
+    #     # overlay3 = cv2.drawContours(overlay3, [contour_points], 0, (0, 0, 255), 2)
+    #     overlay3 = cv2.fillPoly(overlay3, [contour_points], (0, 0, 255))
+    #     for hole in geom.interiors:
+    #         contour_points = np.asarray(hole.coords, dtype='int').tolist()
+    #         contour_points = np.array(contour_points).reshape((-1, 1, 2))
+    #         overlay3 = cv2.fillPoly(overlay3, [contour_points], (0, 0, 0))
+    # 
+    # plt.figure();plt.imshow(overlay3)
+    
     # Transform nuclear dictionary into shapely geometries with lits of contours and types
     # nuc_geometries, inst_cntrs, inst_types = get_nuclear_polygons(wsi, {"mpp": nuc_mpp, "nuc": nuc_data}, nuc_mpp, "mpp")
     nuc_geometries, inst_cntrs, inst_types = get_nuclear_polygons(wsi, {"mpp": nuc_mpp, "nuc": nuc_data}, viz_mpp, "mpp")
 
-
-
-# does not work for some reason!!
-
     spatial_indexer = STRtree(nuc_geometries)
     geo_indices = [
         idx
-        for poly in mask_polygons
+        for poly in mask_polygons.geoms
         for idx in spatial_indexer.query(poly)
-        if poly.intersects(nuc_geometries[idx])
+        if nuc_geometries[idx].intersects(poly)
+        # if nuc_geometries[idx].within(poly)
         ]
-    geo_indices2 = [
-        idx
-        for poly in mask_polygons
-        for idx in spatial_indexer.query(poly)
-        if nuc_geometries[idx].within(poly)
-        ]
+
     # Now, iterate through nuclear geometries and check if they lie within any of the outer polygons but not in holes
     nuc_overlay = thumb.copy()
     nr_iels = 0
     nr_epith = 0
-    for g_i in tqdm(geo_indices2, desc="Processing Nuclei"): 
+    for g_i in tqdm(geo_indices, desc="Processing Nuclei"): 
         # inst_c = inst_cntrs[nuc_geometries.index(obj)]
         geo = nuc_geometries[g_i]
         inst_t = inst_types[g_i]
@@ -158,25 +164,6 @@ def iel_scoring(
             nuc_overlay = cv2.circle(nuc_overlay, (centroid_x, centroid_y), 2, (0, 255, 0), -1) # 3
             nr_epith += 1
     
-    # # Now, iterate through nuclear geometries and check if they lie within any of the outer polygons but not in holes
-    # nuc_overlay = thumb.copy()
-    # nr_iels = 0
-    # nr_epith = 0
-    # for obj in tqdm(nuc_geometries, desc="Processing Nuclei"): 
-    #     for polygon in mask_polygons:
-    #         if obj.within(polygon):
-    #             # inst_c = inst_cntrs[nuc_geometries.index(obj)]
-    #             inst_t = inst_types[nuc_geometries.index(obj)]
-    #             centroid_x = int(obj.centroid.x / thumb_ds[0])
-    #             centroid_y = int(obj.centroid.y / thumb_ds[1])
-    #             if inst_t == 1: # hardcoded that iels are 1, and epith are else
-    #                 nuc_overlay = cv2.circle(nuc_overlay, (centroid_x, centroid_y), 4, (255, 0, 0), -1) # 3
-    #                 nr_iels += 1
-    #             else:
-    #                 nuc_overlay = cv2.circle(nuc_overlay, (centroid_x, centroid_y), 2, (0, 255, 0), -1) # 3
-    #                 nr_epith += 1
-    #             break  # No need to check further polygons if the object is already within one
-    
     # IEL scoring
     iel_index = nr_iels / area_microns # microns
     iel_count = (nr_iels / nr_epith) * 100
@@ -185,7 +172,7 @@ def iel_scoring(
     
     # save overlay
     output_dir_viz = os.path.join(output_dir, "visualisation")
-    os.path.makedirs(output_dir_viz, exist_ok=True)
+    os.makedirs(output_dir_viz, exist_ok=True)
     imwrite(os.path.join(output_dir_viz, basename + ".png"), nuc_overlay)
     print(f"Saved {basename} viz to {output_dir_viz}")
     
@@ -232,7 +219,7 @@ def iel_scoring_wrapper(
     Raises:
         ValueError: If mode is not "tile" or "wsi".
     """
-    wsi_file_list = glob.glob(input_wsi_dir + "*.*")[1:]
+    wsi_file_list = glob.glob(input_wsi_dir + "*.*")#[1:]
     for wsi_file in wsi_file_list:
         iel_scoring(
             wsi_file, input_mask_dir, input_nuc_dir, output_dir, mode,
@@ -252,7 +239,7 @@ def iel_scoring_wrapper(
 
 if __name__ == '__main__':
     args = docopt(__doc__, help=False, options_first=True, 
-                    version='ODYN HoVer-Net+ Inference')
+                    version='IEL scoring')
 
     if args['--help']:
         print(__doc__)
@@ -266,17 +253,17 @@ if __name__ == '__main__':
     if args['--input_mask_dir']:
         input_mask_dir = args['--input_mask_dir']
     else:      
-        input_mask_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/output3/dysplasia/"
+        input_mask_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/output_epith/combined/"
         
     if args['--input_nuc_dir']:
         input_nuc_dir = args['--input_nuc_dir']
     else:      
-        input_nuc_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/output3/epith/nuclei/"
+        input_nuc_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/output_epith/nuclei/"
     
     if args['--output_dir']:
         output_dir = args['--output_dir']
     else:
-        output_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/iels_output/"
+        output_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/output_epith/iels/"
     
     if args['--mode']:
         mode = args['--mode']

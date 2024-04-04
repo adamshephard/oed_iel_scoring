@@ -217,12 +217,12 @@ if __name__ == '__main__':
     if args['--input_dir']:
         input_wsi_dir = args['--input_dir']
     else:      
-        input_wsi_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/wsis/"
+        input_wsi_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/wsis_3/"
     
     if args['--output_dir']:
         output_dir = args['--output_dir']
     else:
-        output_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/output_epith2/"
+        output_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/output_epith4/"
     
     if args['--mode']:
         mode = args['--mode']
