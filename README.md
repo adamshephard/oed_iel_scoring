@@ -1,3 +1,8 @@
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-orange.svg)](https://www.gnu.org/licenses/gpl-3.0)
+  <a href="#cite-this-repository"><img src="https://img.shields.io/badge/Cite%20this%20repository-BibTeX-brightgreen" alt="DOI"></a> <a href="https://doi.org/10.1101/2024.03.27.24304967"><img src="https://img.shields.io/badge/DOI-10.1101%2F2024.03.27.24304967-blue" alt="DOI"></a>
+<br>
+
+
 # Intra-Epithelial Lymphocyte (IEL) Scoring for Predicting Oral Epithelial Dysplasia Malignant Transformation
 
 This repository provides the code for the models used for predicting slide-level malignancy transformation in OED, based on H&E-stained whole-slide images. Link to preprint [here](https://www.medrxiv.org/content/10.1101/2024.03.27.24304967v1).
@@ -96,7 +101,9 @@ Usage: <br />
 
 ## License
 
-TO DO
+Code is under a GPL-3.0 license. See the [LICENSE](https://github.com/TissueImageAnalytics/cerberus/blob/master/LICENSE) file for further details.
+
+Model weights are licensed under [Attribution-NonCommercial-ShareAlike 4.0 International](http://creativecommons.org/licenses/by-nc-sa/4.0/). Please consider the implications of using the weights under this license. 
 
 ## Cite this repository
 ```
