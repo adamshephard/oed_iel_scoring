@@ -175,14 +175,138 @@ def iel_scoring(
     os.makedirs(output_dir_viz, exist_ok=True)
     imwrite(os.path.join(output_dir_viz, basename + ".png"), nuc_overlay)
     print(f"Saved {basename} viz to {output_dir_viz}")
+       
+    # Peak scores
+    img_patches = get_patch_extractor(
+        input_img=wsi,
+        input_mask=mask,
+        method_name="slidingwindow",
+        patch_size=patch_size,
+        resolution=viz_mpp,
+        units="mpp", #"power",
+        stride=patch_stride,
+        pad_mode="constant",
+        pad_constant_values=255,
+        within_bound=False,
+    )
+    
+    iels_index = []
+    iels_count = []
+    iels_bounds = []
+    for patch in tqdm(img_patches):
+        item = img_patches.n-1
+        bounds = img_patches.coordinate_list[item]
+        bounds_ = box(*bounds)
+        
+        bounds_mask = [
+            bounds_.intersection(poly)
+            for poly in mask_polygons.geoms
+            if bounds_.intersects(poly)
+        ]
+        box_mask_area_pixels = sum([b_m.area for b_m in bounds_mask])
+        if box_mask_area_pixels == 0:
+            continue
+        box_mask_area_microns = box_mask_area_pixels * (viz_mpp * viz_mpp)
+        
+        nuc_indices = [
+            geo
+            for geo in spatial_indexer.query(bounds_)
+            if bounds_.contains(nuc_geometries[geo])
+            for poly in mask_polygons.geoms
+            if poly.intersects(nuc_geometries[geo])
+            ]
+        patch_nuc_types = [inst_types[nuc] for nuc in nuc_indices]
+        patch_nr_iels = [1 for n in patch_nuc_types if n == 1]
+        patch_nr_epith = [1 for n in patch_nuc_types if n != 1]
+        patch_nr_iels = sum(patch_nr_iels)
+        patch_nr_epith = sum(patch_nr_epith)
+        
+        if (box_mask_area_microns < 1000) or (patch_nr_epith == 0): # HARDCODED! 1000 is specific to 2.0 mpp!
+            # 1. Ensure enough tissue present
+            # 2. If no epithelial nuclei are present then likely to be an error in processing
+            iels_count.append(0)
+            iels_index.append(0)
+        else:
+            # Peak Index
+            iel_patch_index = patch_nr_iels / box_mask_area_microns
+        
+            # Peak Count
+            iel_patch_count = (patch_nr_iels / patch_nr_epith) * 100
+            
+            if iel_patch_count > 500:
+            # If > 500 make 0 as unlikely to be real. Alternatively cap at 500?
+                iel_patch_count = 0
+                iel_patch_index = 0
+            
+            iels_count.append(iel_patch_count)
+            iels_index.append(iel_patch_index)
+        
+        iels_bounds.append(bounds)
+
+    ds = base_dims / thumb_dims
+    slide_level_score_df = pd.DataFrame({
+        'start_x': (np.asarray(iels_bounds)[:,0]*ds[0]).astype(int),
+        'start_y': (np.asarray(iels_bounds)[:,1]*ds[1]).astype(int),
+        'end_x': (np.asarray(iels_bounds)[:,2]*ds[0]).astype(int),
+        'end_y': (np.asarray(iels_bounds)[:,3]*ds[1]).astype(int),
+        'iel_index': iels_index,
+        'iel_count': iels_count
+        })
+    
+    output_csv_dir = os.path.join(output_dir, "scores")
+    csv_path = os.path.join(output_csv_dir, f"{basename}.csv")
+    os.makedirs(output_csv_dir, exist_ok=True)
+    slide_level_score_df.to_csv(csv_path, index=False)    
+    
+    # Find max scores and visualise tiles
+    max_score_slide_1 = slide_level_score_df.nlargest(1, "iel_index")
+    max_1_bounds = int(max_score_slide_1.iloc[0]["start_x"]), int(max_score_slide_1.iloc[0]["start_y"]), int(max_score_slide_1.iloc[0]["end_x"]), int(max_score_slide_1.iloc[0]["end_y"])
+    iel_peak_index = max_score_slide_1.iloc[0]["iel_index"]
+    max_score_slide_2 = slide_level_score_df.nlargest(1, "iel_count")
+    max_2_bounds = int(max_score_slide_2.iloc[0]["start_x"]), int(max_score_slide_2.iloc[0]["start_y"]), int(max_score_slide_2.iloc[0]["end_x"]), int(max_score_slide_2.iloc[0]["end_y"])
+    iel_peak_count = max_score_slide_2.iloc[0]["iel_count"] 
     
     # save scores to csv
     scores_tmp.loc[len(scores_tmp)] = [basename, iel_index, iel_count, iel_peak_index, iel_peak_count]    
     scores_tmp.to_csv(score_path, index=False)
     print(f"Saved {basename} scores to {score_path}")
     
-    # TO DO:
-    # ADD peak scores
+    # TODO: Save best patches!
+
+    # # VIZ contours for patches
+    # overlay = patch.copy()
+    # for b_m in bounds_mask:
+    # coords = np.array(b_m.exterior.coords)
+    # coords[:,0] = coords[:,0] - bounds[0]
+    # coords[:,1] = coords[:,1] - bounds[1]
+    # overlay = cv2.drawContours(overlay, [np.array(coords, dtype='int')], 0, (0, 0, 255), 2)
+    # for hole in b_m.interiors:
+    #     coords = np.array(hole.coords)
+    #     coords[:,0] = coords[:,0] - bounds[0]
+    #     coords[:,1] = coords[:,1] - bounds[1]        
+    #     overlay = cv2.fillPoly(overlay, [np.array(coords, dtype='int')], 0, (0, 0, 0), 2)
+        
+    # plt.figure()
+    # plt.imshow(overlay)
+
+    # overlay = patch.copy()
+    # for nuc in nuc_indices:
+    # geom = nuc_geometries[nuc]
+    # if geom.type != "Polygon":
+    #     print(nuc)
+    #     continue
+    # nuc_t = inst_types[nuc]
+    # coords = np.array(geom.exterior.coords)
+    # coords[:,0] = coords[:,0] - bounds[0]
+    # coords[:,1] = coords[:,1] - bounds[1]
+    # if nuc_t == 1:
+    #     overlay = cv2.drawContours(overlay, [np.array(coords, dtype='int')], 0, (255, 0, 0), 2)
+    # else:
+    #     overlay = cv2.drawContours(overlay, [np.array(coords, dtype='int')], 0, (0, 255, 0), 2)
+
+    # plt.figure()
+    # plt.imshow(overlay)
+    
     return
 
 
