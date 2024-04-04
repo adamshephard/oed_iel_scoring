@@ -87,11 +87,11 @@ Usage: <br />
 
 #### IEL Scoring
 
-The next stage is to generate IEL scores for each WSI using the nuclei/layer segmentations. Note the `epithelium_dir` is the output directory from the previous step.
+The next stage is to generate IEL scores for each WSI using the nuclei/layer segmentations. Note the `input_mask_dir` is the output directory from the previous step.
 
 Usage: <br />
 ```
-  python iel_scoring.py --input_dir="/path/to/input/slides/or/images/dir/" --epithelium_dir="/path/to/combined/mask/dir/" --output_dir="/path/to/output/feature/dir/"
+  python iel_scoring.py --input_wsi_dir="/path/to/input/slides/or/images/dir/" --input_mask_dir="/path/to/combined/mask/dir/" --output_dir="/path/to/output/feature/dir/"
 ```
 
 ## License
