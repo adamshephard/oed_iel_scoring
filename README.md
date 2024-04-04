@@ -101,7 +101,7 @@ Usage: <br />
 
 ## License
 
-Code is under a GPL-3.0 license. See the [LICENSE](https://github.com/TissueImageAnalytics/cerberus/blob/master/LICENSE) file for further details.
+Code is under a GPL-3.0 license. See the [LICENSE](https://github.com/adamshephard/oed_iel_scoring/blob/main/LICENSE) file for further details.
 
 Model weights are licensed under [Attribution-NonCommercial-ShareAlike 4.0 International](http://creativecommons.org/licenses/by-nc-sa/4.0/). Please consider the implications of using the weights under this license. 
 
