@@ -64,7 +64,7 @@ def combine_masks(
         
         # Use the overlap of both methods
         epith = combined_img.copy()
-        epith[epith <= 2] = 0
+        epith[epith <= 1] = 0
         epith[epith >= 2] = 1
         dysp_epith = dysp_img*epith
 
@@ -93,17 +93,17 @@ if __name__ == '__main__':
     if args['--input_epith']:
         input_epith_dir = args['--input_epith']
     else:      
-        input_epith_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/output_epith/epith/"
+        input_epith_dir = "/data/ANTICIPATE/github/testdata/output_epith4/epith/"
         
     if args['--input_dysplasia']:
         input_dysp_dir = args['--input_dysplasia']
     else:      
-        input_dysp_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/output_epith/dysplasia/"        
+        input_dysp_dir = "/data/ANTICIPATE/github/testdata/output_epith4/dysplasia/"        
     
     if args['--output_dir']:
         output_dir = args['--output_dir']
     else:
-        output_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/output_epith/combined/"       
+        output_dir = "/data/ANTICIPATE/github/testdata/output_epith4/combined/"       
 
     epith_colour_dict = {
         "nolabel": [0, [0  ,   0,   0]],

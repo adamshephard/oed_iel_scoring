@@ -166,12 +166,12 @@ if __name__ == '__main__':
     if args['--input_dir']:
         input_wsi_dir = args['--input_dir']
     else:      
-        input_wsi_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/wsis_4/"
+        input_wsi_dir = "/data/ANTICIPATE/github/testdata/wsis_3/"
     
     if args['--output_dir']:
         output_dir = args['--output_dir']
     else:
-        output_dir = "/data/ANTICIPATE/outcome_prediction/MIL/github_testdata/output_epith4/"
+        output_dir = "/data/ANTICIPATE/github/testdata/output_epith4/"
     
     if args['--mode']:
         mode = args['--mode']
@@ -183,7 +183,7 @@ if __name__ == '__main__':
     if args['--model_checkpoint']:
         checkpoint_path = args['--model_checkpoint']
     else:
-        checkpoint_path = "/data/ANTICIPATE/outcome_prediction/ODYN_inference/weights/transunet_external.tar"
+        checkpoint_path = "/data/ANTICIPATE/github/ODYN_inference/weights/transunet_external.tar"
         
     colour_dict = {
         "nolabel": [0, [0  ,   0,   0]],
