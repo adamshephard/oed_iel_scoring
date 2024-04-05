@@ -106,6 +106,22 @@ Usage: <br />
   python iel_scoring.py --input_wsi_dir="/path/to/input/slides/or/images/dir/" --input_mask_dir="/path/to/combined/mask/dir/" --output_dir="/path/to/output/feature/dir/"
 ```
 
+## Interactive Demo
+
+We have made an interactive demo to help visualise the output of our model. Note, this is not optimised for mobile phones and tablets. The demo was built using the TIAToolbox [tile server](https://tia-toolbox.readthedocs.io/en/latest/_autosummary/tiatoolbox.visualization.tileserver.TileServer.html).
+
+Check out the demo [here](https://tiademos.dcs.warwick.ac.uk/bokeh_app?demo=oed_iels). 
+
+In the demo, we provide multiple examples of WSI-level results. These include:
+- Dysplasia segmentations (using the Transformer model). Here, dysplasia is in red.
+- Intra-epithelial layer segmentation (using HoVer-Net+). Here, orange is stroma, red is the basal layer, green the (core) epithelial layer, and blue keratin.
+- Combined mask (from the above two segmentations). Here, orange is stroma, red is dysplasia, and green is non-dysplastic epithelium.
+- Nuclei segmentations (using HoVer-Net+). Here, orange is "other" nuclei (i.e. connective/inflammatory), whilst the epithelial nuclei are coloured green).
+- Masked nuclei segmentations. Here, orange is IEL nuclei, and green is epithelial nuclei.
+
+Each histological object can be toggled on/off by clicking the appropriate buton on the right hand side. Also, the colours and the opacity can be altered.
+
+
 ## License
 
 Code is under a GPL-3.0 license. See the [LICENSE](https://github.com/adamshephard/oed_iel_scoring/blob/main/LICENSE) file for further details.
