@@ -3,11 +3,18 @@
 <br>
 
 
-# Intra-Epithelial Lymphocyte (IEL) Scoring for Predicting Oral Epithelial Dysplasia Malignant Transformation
+# Intra-Epithelial Lymphocyte (IEL) Scoring in Oral Epithelial Dysplasia
 
-This repository provides the code for the models used for predicting slide-level malignancy transformation in OED, based on H&E-stained whole-slide images. Link to preprint [here](https://www.medrxiv.org/content/10.1101/2024.03.27.24304967v1).
+This repository provides the code for the models used to generate intra-epithelial lymphocyte (IEL) scores in OED, based on H&E-stained whole-slide images. Link to preprint [here](https://www.medrxiv.org/content/10.1101/2024.03.27.24304967v1).
 
 The first step in this pipeline is to use HoVer-Net+ (see original paper [here](https://openaccess.thecvf.com/content/ICCV2021W/CDPath/html/Shephard_Simultaneous_Nuclear_Instance_and_Layer_Segmentation_in_Oral_Epithelial_Dysplasia_ICCVW_2021_paper.html)) to segment the epithelium and nuclei. We have used the TIAToolbox (see paper [here](https://www.nature.com/articles/s43856-022-00186-5)) implementation of HoVer-Net+ in the below scripts. Next, we have used a Transformer-based model to segment the dyplastic regions of the WSIs (see paper [here](https://arxiv.org/abs/2311.05452)).
+
+Following this, we count the number of IELs in the combined dysplasia-epithelium mask using various different IEL scores, as per the paper:
+
+1. IEL Index (II) – the number of IELs per unit area of dysplasia, within the entire dysplastic region of the WSI
+2. IEL Peak Index (IPI) – the maximum number of IELs per unit area of dysplasia in any given area of dysplasia (here, chosen to be a patch of size 512 x 512, at 1.0 mpp resolution)
+3. IEL Count (IC) – the number of IELs per 100 dysplastic epithelial cells, in any given area of dysplasia (here, chosen to be a patch of size 512 x 512, at 1.0 mpp resolution)
+4. IEL Peak Count (IPC) – the maximum number of IELs per 100 dysplastic epithelial cells, within the entire dysplastic region of the WSI In Figure 1, we provide an overview of the proposed analytical pipeline used to generate our IEL scores.
 
 ## Set Up Environment
 
@@ -53,7 +60,8 @@ Output: <br />
   - 'prob': per class probabilities for each nucleus
   - 'type': prediction of category for each nucleus
 - Transformer dysplasia segmentations as `png` files. These segmentations are saved at 1 mpp resolution.
-- IEL scores.
+- IEL scores csv file
+- IEL scores visualisation per slide
 
 ### Model Weights
 
