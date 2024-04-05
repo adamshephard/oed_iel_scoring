@@ -42,9 +42,8 @@ Below are the main executable scripts in the repository:
 
 - `dysplasia_segmentation.py`: transformer inference script
 - `epithelium_segmentation.py`: hovernetplus inference script
+- `combined_masks.py`: combine dysplasia-epithelium masks script
 - `iel_scoring.py`: IEL scoring script
-- `viz_iels.py`: Visualise IEL/nuclei and dysplasi regions in cases.
-
 
 ## Inference
 
@@ -61,7 +60,7 @@ Output: <br />
   - 'type': prediction of category for each nucleus
 - Transformer dysplasia segmentations as `png` files. These segmentations are saved at 1 mpp resolution.
 - IEL scores csv file
-- IEL scores visualisation per slide
+- IEL scores visualisation per slide (visualisaton at 2 mpp resolution).
 
 ### Model Weights
 
