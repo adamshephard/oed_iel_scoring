@@ -121,6 +121,7 @@ In the demo, we provide multiple examples of WSI-level results. These include:
 
 Each histological object can be toggled on/off by clicking the appropriate buton on the right hand side. Also, the colours and the opacity can be altered.
 
+https://github.com/adamshephard/oed_iel_scoring/assets/39619155/4ae9a645-8a7b-4675-b14e-62d62f891750
 
 ## License
 
