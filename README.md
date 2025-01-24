@@ -133,11 +133,10 @@ Model weights are licensed under [Attribution-NonCommercial-ShareAlike 4.0 Inter
 ```
 @article{Shephard2024IELs,
 	author = {Adam J Shephard and Hanya Mahmood and Shan E Ahmed Raza and Syed Ali Khurram and Nasir M Rajpoot},
-	title = {A Novel AI-based Score for Assessing the Prognostic Value of Intra-Epithelial Lymphocytes in Oral Epithelial Dysplasia},
+	title = {A novel AI-based score for assessing the prognostic value of intra-epithelial lymphocytes in oral epithelial dysplasia},
 	year = {2024},
-	doi = {10.1101/2024.03.27.24304967},
-	publisher = {Cold Spring Harbor Laboratory Press},
-	URL = {https://www.medrxiv.org/content/early/2024/03/28/2024.03.27.24304967},
-	journal = {medRxiv}
+	doi = {10.1038/s41416-024-02916-z},
+	URL = {https://doi.org/10.1038/s41416-024-02916-z},
+	journal = {British Journal of Cancer}
 }
 ```
